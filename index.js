@@ -9,6 +9,13 @@ require('dotenv').config()
 //Initialize App
 const app = express()
 
+//Middlewares
+app.use(bodyParser.urlencoded({ extended: false }))
+app.use(bodyParser.json())
+app.use(cors())
+app.use(morgan('dev'))
+app.use(fileUpload())
+
 //Service
 const servicesSchema = new mongoose.Schema(
   {
@@ -389,13 +396,6 @@ app.delete('/admin/:id', async (req, res) => {
     res.status(200).send('admin Deleted Successfully')
   })
 })
-
-//Middlewares
-app.use(bodyParser.urlencoded({ extended: false }))
-app.use(bodyParser.json())
-app.use(cors())
-app.use(morgan('dev'))
-app.use(fileUpload())
 
 //Connect Database
 mongoose
