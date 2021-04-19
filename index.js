@@ -405,6 +405,132 @@ app.delete('/admin/:id', async (req, res) => {
   })
 })
 
+const appointmentSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      trim: true,
+      required: true,
+      maxlength: 64,
+    },
+    email: {
+      type: String,
+      trim: true,
+      required: true,
+    },
+    service: {
+      type: String,
+      trim: true,
+      required: true,
+    },
+    price: {
+      type: Number,
+      trim: true,
+      required: true,
+    },
+    status: {
+      type: String,
+      default: 'Pending',
+    },
+
+    // paymentId: {
+    //   type: String,
+    //   trim: true,
+    //   required: true,
+    // },
+  },
+  { timestamps: true }
+)
+
+//Appointment
+const Appointment = mongoose.model('Appointment', appointmentSchema)
+
+//GET ALL APPOINTMENTS
+app.get('/appointments', (req, res) => {
+  const email = req.query.email
+
+  Admin.find({ email: email }).exec((err, admins) => {
+    if (err) {
+      return res.status(404).json({
+        error: 'Admins not found',
+      })
+    } else {
+      if (admins.length > 0) {
+        Appointment.find().exec((err, appointments) => {
+          if (err) {
+            return res.status(400).json({
+              error: 'Appointments not found',
+            })
+          }
+          return res.json(appointments)
+        })
+      } else {
+        Appointment.find({ email: email }).exec((err, appointments) => {
+          if (err) {
+            return res.status(400).json({
+              error: 'Appointments not found',
+            })
+          }
+          return res.json(appointments)
+        })
+      }
+    }
+  })
+})
+
+//POST AN APPOINTMENTS
+app.post('/appointment/add', (req, res) => {
+  const name = req.body.name
+  const email = req.body.email
+  const service = req.body.service
+  const price = req.body.price
+
+  const appointment = new Appointment({ name, email, service, price })
+
+  appointment.save((err, appointment) => {
+    if (err) {
+      console.log('Error while adding the appointment', err)
+      return res.status(404).json({
+        error: 'Appointment Not Added',
+      })
+    } else {
+      // saved!
+      console.log('Appointment Saved')
+      return res.status(200).send(appointment)
+    }
+  })
+})
+
+//UPDATE STATUS
+app.put('/appointment/status/:id', async (req, res) => {
+  const id = req.params.id
+  const updatedAppointment = req.body
+  await Appointment.findByIdAndUpdate(id, updatedAppointment).exec(err => {
+    if (err) {
+      console.log('Error while updating the appointment', err)
+      return res.status(404).json({
+        error: 'Appointment not found',
+      })
+    }
+    res.status(200).send('status updated successfully')
+  })
+})
+
+//DELETE AN APPOINTMENTS
+app.delete('/appointment/:id', async (req, res) => {
+  const id = req.params.id
+
+  await Appointment.findByIdAndRemove(id).exec((err, appointments) => {
+    if (err) {
+      console.log('Error while deleting the appointment', err)
+      return res.status(400).json({
+        error: 'Appointment not found',
+      })
+    }
+    res.status(200).send('Appointment Deleted Successfully')
+  })
+})
+
 //Connect Database
 mongoose
   .connect(process.env.DATABASE, {
